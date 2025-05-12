@@ -26,7 +26,14 @@ class DetailViewController: UIViewController {
         view.addSubview(detalle)
         configurarPicker()
         responsables = obtenerResponsables()
-        nombresResponsables = responsables.map { $0.nombre ?? "Sin nombre" }
+        nombresResponsables = responsables.map { responsable in
+            let nombreCompleto = [
+                responsable.nombre ?? "",
+                responsable.apellido_paterno ?? "",
+                responsable.apellido_materno ?? ""
+            ].joined(separator: " ").trimmingCharacters(in: .whitespaces)
+            return nombreCompleto
+        }
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -84,9 +91,26 @@ class DetailViewController: UIViewController {
     
     @objc
     func donePicking() {
+        if let responsable = responsableSeleccionado {
+            laMascota.responsable = responsable
+            let contexto = DataManager.shared.persistentContainer.viewContext
+            do {
+                try contexto.save()
+                print("Responsable asignado y guardado en la base de datos.")
+                detalle.btnAdopt.isHidden = true
+                let ownerInfo = "\(responsable.nombre ?? "") \(responsable.apellido_paterno ?? "") \(responsable.apellido_materno ?? "")"
+                detalle.lblResponsable.isHidden = false
+                detalle.lblResponsable.frame.size.height = 50
+                detalle.lblResponsable.text = "Dueño: \(ownerInfo)"
+                detalle.lblResponsable.sizeToFit()
+            } catch {
+                print("Error al guardar la relación responsable: \(error.localizedDescription)")
+            }
+        }
         pickerView.removeFromSuperview()
         toolBar.removeFromSuperview()
     }
+
     
     func configurarPicker() {
         pickerView = UIPickerView()
@@ -97,7 +121,7 @@ class DetailViewController: UIViewController {
         toolBar = UIToolbar()
         toolBar.sizeToFit()
         
-        let doneButton = UIBarButtonItem(title: "Hecho", style: .done, target: self, action: #selector(donePicking))
+        let doneButton = UIBarButtonItem(title: "Done", style: .done, target: self, action: #selector(donePicking))
         let flexibleSpace = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
         toolBar.setItems([flexibleSpace, doneButton], animated: false)
     }
