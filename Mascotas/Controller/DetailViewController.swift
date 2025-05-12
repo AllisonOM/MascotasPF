@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import CoreData
 
 class DetailViewController: UIViewController {
 
@@ -14,12 +15,18 @@ class DetailViewController: UIViewController {
     var pickerView: UIPickerView!
     var toolBar: UIToolbar!
     
+    var responsables: [Responsable] = []
+    var nombresResponsables: [String] = []
+    var responsableSeleccionado: Responsable?
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
         detalle = DetailView(frame:view.bounds.insetBy(dx: 40, dy: 40))
         view.addSubview(detalle)
         configurarPicker()
+        responsables = obtenerResponsables()
+        nombresResponsables = responsables.map { $0.nombre ?? "Sin nombre" }
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -94,7 +101,19 @@ class DetailViewController: UIViewController {
         let flexibleSpace = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
         toolBar.setItems([flexibleSpace, doneButton], animated: false)
     }
-
+    
+    func obtenerResponsables() -> [Responsable] {
+        let contexto = DataManager.shared.persistentContainer.viewContext
+        let fetchRequest: NSFetchRequest<Responsable> = Responsable.fetchRequest()
+        
+        do {
+            let responsables = try contexto.fetch(fetchRequest)
+            return responsables
+        } catch {
+            print("Error al obtener responsables: \(error.localizedDescription)")
+            return []
+        }
+    }
 }
 
 extension DetailViewController: UIPickerViewDelegate, UIPickerViewDataSource {
@@ -103,11 +122,16 @@ extension DetailViewController: UIPickerViewDelegate, UIPickerViewDataSource {
     }
 
     func pickerView(_ pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int {
-        return 0 // Picker vacío
+        return nombresResponsables.count
     }
 
     func pickerView(_ pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String? {
-        return ""
+        return nombresResponsables[row]
+    }
+    
+    func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
+        // Al seleccionar un responsable, asignamos el objeto `Responsable` correspondiente
+        responsableSeleccionado = responsables[row]
     }
 }
 

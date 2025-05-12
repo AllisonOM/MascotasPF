@@ -106,6 +106,7 @@ class DataManager : NSObject {
                 }
                 do {
                     let tmp = try JSONDecoder().decode([ResponsableVO].self, from:data!)
+                    print("Datos de responsables descargados correctamente. Total responsables: \(tmp.count)")
                     self.guardaResponsables (tmp)
                 }
                 catch { print ("no se obtuvo un JSON en la respuesta") }
